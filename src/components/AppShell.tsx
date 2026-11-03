@@ -1,8 +1,8 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Megaphone, UserPlus, Wallet, GraduationCap, Users, Briefcase, Settings,
-  Search, Bell, PanelLeft, Plus, TrendingUp, ChevronRight, HelpCircle, Sparkles, MoreHorizontal,
+  Search, Bell, Plus, TrendingUp, ChevronRight, HelpCircle, Sparkles, MoreHorizontal, X,
   BarChart3, Activity, CircleDot, ShieldCheck, Landmark,
 } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -20,6 +20,62 @@ export const menu = [
   { title: "Settings", url: "/settings", icon: Settings },
 ] as const;
 
+/* Rolled-mat trigger from the academia trainer portal: the little mat the
+ * navigation drawer unfolds from. */
+function RolledMatIcon() {
+  return (
+    <svg className="rolled-mat-icon" viewBox="0 0 48 48" aria-hidden="true">
+      <defs>
+        <linearGradient id="mat-body" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#c65b73" />
+          <stop offset="0.28" stopColor="#98445c" />
+          <stop offset="0.72" stopColor="#702f42" />
+          <stop offset="1" stopColor="#552333" />
+        </linearGradient>
+        <linearGradient id="mat-edge" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stopColor="#f8e9ed" />
+          <stop offset="0.42" stopColor="#e6b8c4" />
+          <stop offset="1" stopColor="#c65b73" />
+        </linearGradient>
+        <linearGradient id="mat-band" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stopColor="#f7c875" />
+          <stop offset="0.52" stopColor="#e8b45a" />
+          <stop offset="1" stopColor="#d88625" />
+        </linearGradient>
+        <radialGradient id="mat-spiral" cx="30%" cy="24%" r="80%">
+          <stop offset="0" stopColor="#fffafc" />
+          <stop offset="0.72" stopColor="#e6b8c4" />
+          <stop offset="1" stopColor="#c65b73" />
+        </radialGradient>
+        <filter id="mat-shadow" x="-30%" y="-30%" width="170%" height="180%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="1.4" />
+          <feOffset dy="1.5" />
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.34" />
+          </feComponentTransfer>
+          <feMerge>
+            <feMergeNode />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <ellipse cx="25" cy="39" rx="14" ry="3" fill="#311923" opacity=".16" />
+      <g filter="url(#mat-shadow)">
+        <path d="M13 12h20.5c5.1 0 8.5 4.9 8.5 12s-3.4 12-8.5 12H13z" fill="url(#mat-body)" />
+        <path d="M20 13.4v21.2M21.4 13.4v21.2" stroke="#f8e9ed" strokeOpacity=".3" strokeWidth=".8" />
+        <path d="M31.8 13.2v21.6" stroke="url(#mat-band)" strokeWidth="2.2" />
+        <path d="M34.2 14c2.6 1.8 4 5.2 4 10s-1.4 8.2-4 10" fill="none" stroke="#f8e9ed" strokeOpacity=".54" strokeWidth=".9" />
+        <ellipse cx="13.2" cy="24" rx="8.2" ry="12.2" fill="#552333" />
+        <ellipse cx="12.7" cy="24" rx="6.8" ry="10.6" fill="url(#mat-edge)" />
+        <ellipse cx="12.6" cy="24" rx="4.65" ry="7.9" fill="#702f42" />
+        <path d="M14.4 19.3c-1.4-1.8-4.3-1.5-5.3.4-.8 1.5-.2 3.1 1.2 3.6 1.5.6 2.8-.5 2.6-1.7-.1-.8-.9-1.2-1.5-.8" fill="none" stroke="#f8e9ed" strokeLinecap="round" strokeWidth="1.25" />
+        <path d="M11 13.8c-2 .5-3.8 2-4.8 4" fill="none" stroke="#fff" strokeLinecap="round" strokeOpacity=".8" strokeWidth="1.2" />
+        <path d="M18 13.4h10" stroke="#fff" strokeLinecap="round" strokeOpacity=".3" strokeWidth="1" />
+      </g>
+      <path d="M13 36c6 .7 13 .7 20 0" fill="none" stroke="#c65b73" strokeLinecap="round" strokeOpacity=".85" strokeWidth="1.3" />
+    </svg>
+  );
+}
 
 function BackgroundArt() {
   return (
@@ -51,52 +107,154 @@ function BackgroundArt() {
   );
 }
 
+const ROLL_CLOSE_MS = 320;
+
 export function AppShell({ title, children }: { title: string; children: ReactNode }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [rollingUp, setRollingUp] = useState(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const router = useRouter();
+  const closeTimer = useRef<number | null>(null);
+  const closingRef = useRef(false);
+
+  /* Roll the mat back up (320ms) before actually closing, exactly like the
+   * academia trainer portal drawer. */
+  const closeAfterRoll = useCallback((afterClose?: () => void) => {
+    if (closingRef.current) return;
+
+    closingRef.current = true;
+    setRollingUp(true);
+    closeTimer.current = window.setTimeout(() => {
+      closingRef.current = false;
+      setRollingUp(false);
+      setOpen(false);
+      afterClose?.();
+    }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : ROLL_CLOSE_MS);
+  }, []);
+
+  // Cancel a pending roll-up when the drawer is reopened mid-animation.
+  useEffect(() => {
+    if (open && closeTimer.current !== null) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+      closingRef.current = false;
+      setRollingUp(false);
+    }
+  }, [open]);
+
+  // Auto-close with the roll-up whenever the route changes.
+  useEffect(() => {
+    if (open) closeAfterRoll();
+  }, [open, path, closeAfterRoll]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && (open || rollingUp)) closeAfterRoll();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, rollingUp, closeAfterRoll]);
+
+  useEffect(() => () => {
+    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+  }, []);
+
+  const handleNavigate = (event: { preventDefault: () => void }, target: (typeof menu)[number]["url"]) => {
+    event.preventDefault();
+    if (path === target) {
+      closeAfterRoll();
+      return;
+    }
+    closeAfterRoll(() => router.navigate({ to: target }));
+  };
+
+  const toggleMenu = () => {
+    if (open || rollingUp) closeAfterRoll();
+    else setOpen(true);
+  };
+
   return (
-    <div className="flex min-h-screen w-full bg-background font-sans">
-      <aside className={`${open ? "w-64" : "w-[72px]"} sticky top-0 h-screen shrink-0 bg-sidebar-gradient text-sidebar-foreground transition-all duration-300 flex flex-col`}>
-        <div className="flex h-16 items-center gap-3 px-4">
-          <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary-gradient text-primary-foreground shadow-glow">
-            <GraduationCap className="size-5" />
-          </div>
-          {open && (
-            <div className="leading-tight">
-              <p className="font-extrabold tracking-tight text-sidebar-accent-foreground">Manager Edu</p>
-              <p className="text-[11px] opacity-60">School Suite</p>
+    <div className="flex min-h-screen w-full flex-col bg-background font-sans">
+      {/* Backdrop */}
+      <div
+        className={`portal-sidebar-backdrop fixed inset-0 z-40 ${
+          open && !rollingUp ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => closeAfterRoll()}
+        aria-hidden="true"
+      />
+
+      {/* Floating panel that unfolds from the rolled-mat trigger. */}
+      <aside
+        id="app-navigation-drawer"
+        aria-label="Main navigation drawer"
+        aria-hidden={!open || rollingUp}
+        className={`portal-sidebar fixed z-50 flex flex-col shadow-2xl ${
+          open && !rollingUp ? "is-open" : "is-closed"
+        }`}
+      >
+        {/* Drawer header with branding & close button */}
+        <div className="flex h-16 shrink-0 items-center justify-between border-b px-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="portal-brand-mark grid size-9 shrink-0 place-items-center rounded-xl border font-bold">
+              <GraduationCap className="size-5" />
             </div>
-          )}
+            <div className="min-w-0 leading-tight">
+              <span className="block truncate text-sm font-extrabold tracking-tight">Manager Edu</span>
+              <span className="portal-drawer-subtle block truncate text-[11px]">School Suite</span>
+            </div>
+          </div>
+          <button
+            onClick={() => closeAfterRoll()}
+            className="portal-drawer-close rounded-lg p-1.5 transition-colors"
+            aria-label="Close navigation menu"
+            title="Close navigation menu"
+          >
+            <X className="size-5" />
+          </button>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-2">
-          <div className="space-y-1">
-            {menu.map((m) => {
-              const active = path === m.url;
-              return (
-                <Link key={m.url} to={m.url} title={m.title}
-                  className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${active ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-glow" : "hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground"}`}>
-                  <m.icon className="size-[18px] shrink-0" />
-                  {open && <span className="flex-1">{m.title}</span>}
-                  {open && active && <ChevronRight className="size-4 opacity-70" />}
-                </Link>
-              );
-            })}
+
+        {/* Navigation items (auto-close on click) */}
+        <nav className="portal-sidebar-nav flex-1 overflow-y-auto px-3 py-4" aria-label="Navigation menu">
+          <div className="portal-drawer-subtle px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider">
+            Navigation Menu
+          </div>
+          <div className="space-y-1.5">
+            {menu.map((m) => (
+              <Link
+                key={m.url}
+                to={m.url}
+                onClick={(e) => handleNavigate(e, m.url)}
+                title={m.title}
+                className="portal-nav-link group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium"
+              >
+                <m.icon className="size-[18px] shrink-0 transition-transform group-hover:scale-105" />
+                <span className="flex-1 whitespace-nowrap tracking-tight">{m.title}</span>
+                {path === m.url && <ChevronRight className="size-4 opacity-70" />}
+              </Link>
+            ))}
           </div>
         </nav>
-        {open && (
-          <div className="m-3 rounded-xl bg-sidebar-accent/40 p-4">
-            <Sparkles className="size-5 text-sidebar-accent-foreground" />
-            <p className="mt-2 text-sm font-semibold text-sidebar-accent-foreground">Upgrade to Pro</p>
-            <p className="mt-1 text-xs opacity-70">Unlock analytics & multi-branch.</p>
-          </div>
-        )}
+
+        <div className="portal-upgrade-card mx-3 mb-3 p-4">
+          <Sparkles className="size-5" />
+          <p className="mt-2 text-sm font-semibold">Upgrade to Pro</p>
+          <p className="portal-drawer-subtle mt-1 text-xs">Unlock analytics &amp; multi-branch.</p>
+        </div>
       </aside>
 
       <div className="relative flex flex-1 flex-col min-w-0">
         <BackgroundArt />
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b bg-card/80 px-6 backdrop-blur">
-          <button onClick={() => setOpen(!open)} className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground" aria-label="Toggle menu">
-            <PanelLeft className="size-[18px]" />
+        <header className={`${open || rollingUp ? "z-[45]" : "z-20"} sticky top-0 flex h-16 items-center gap-3 border-b bg-card/80 px-6 backdrop-blur`}>
+          <button
+            onClick={toggleMenu}
+            className="mat-trigger -ml-1 shrink-0"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls="app-navigation-drawer"
+            title={open ? "Close menu" : "Open menu"}
+          >
+            <RolledMatIcon />
           </button>
           <div className="relative hidden max-w-md flex-1 md:block">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
