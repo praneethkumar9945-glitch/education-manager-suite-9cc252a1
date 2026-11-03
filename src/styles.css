@@ -209,3 +209,186 @@ nav a { transition: background .25s, color .25s, border-color .25s; }
   .module-workspace :is([class~="border-slate-200"], [class~="border-slate-100"], [class~="border-gray-200"]) { border-color: var(--border); }
   .module-workspace :is([class~="rounded-xl"], [class~="rounded-2xl"]) { border-radius: var(--radius-md); }
 }
+
+/* ===== Rolled-mat navigation drawer (menu animation from academia-trainer-portal) ===== */
+:root {
+  --rose: #c65b73;
+  --soft-rose: #f4dfe5;
+  --deep-burgundy: #552333;
+}
+
+.portal-sidebar {
+  top: 72px;
+  left: 8px;
+  width: min(320px, calc(100vw - 16px));
+  max-height: calc(100dvh - 80px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 18px;
+  color: #fff;
+  background:
+    radial-gradient(ellipse at 15% 0%, rgb(198 91 115 / 20%), transparent 42%),
+    linear-gradient(160deg, #823e53 0%, #702f42 48%, #552333 100%);
+  box-shadow:
+    0 22px 54px rgb(53 23 34 / 30%),
+    0 4px 12px rgb(53 23 34 / 20%),
+    inset 0 1px 0 rgb(255 255 255 / 16%);
+  transform: perspective(900px) rotateX(-76deg) scaleY(0.12) translateY(-10px);
+  transform-origin: 28px 0;
+  clip-path: inset(0 0 100% 0 round 18px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform 340ms cubic-bezier(0.2, 0.8, 0.25, 1),
+    clip-path 360ms cubic-bezier(0.2, 0.8, 0.25, 1),
+    opacity 210ms ease,
+    visibility 0s linear 360ms;
+}
+
+.portal-sidebar.is-open {
+  transform: perspective(900px) rotateX(0) scaleY(1) translateY(0);
+  clip-path: inset(0 0 0 0 round 18px);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    transform 360ms cubic-bezier(0.2, 0.8, 0.25, 1),
+    clip-path 380ms cubic-bezier(0.2, 0.8, 0.25, 1),
+    opacity 240ms ease,
+    visibility 0s;
+}
+
+.portal-sidebar-backdrop {
+  background-color: rgb(41 36 58 / 26%);
+  backdrop-filter: blur(2px);
+  transition: opacity 240ms ease;
+}
+
+.portal-sidebar-nav {
+  perspective: 700px;
+}
+
+.portal-sidebar .portal-nav-link {
+  opacity: 0;
+  transform: translateY(-7px) rotateX(-8deg);
+  color: rgb(255 255 255 / 82%);
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    opacity 160ms ease,
+    transform 200ms ease;
+}
+
+.portal-sidebar.is-open .portal-nav-link {
+  opacity: 1;
+  transform: translateY(0) rotateX(0);
+  transition-delay: 50ms;
+}
+
+.portal-sidebar.is-open nav .portal-nav-link:nth-of-type(2) { transition-delay: 85ms; }
+.portal-sidebar.is-open nav .portal-nav-link:nth-of-type(3) { transition-delay: 120ms; }
+.portal-sidebar.is-open nav .portal-nav-link:nth-of-type(4) { transition-delay: 155ms; }
+.portal-sidebar.is-open nav .portal-nav-link:nth-of-type(5) { transition-delay: 190ms; }
+.portal-sidebar.is-open nav .portal-nav-link:nth-of-type(6) { transition-delay: 225ms; }
+.portal-sidebar.is-open nav .portal-nav-link:nth-of-type(7) { transition-delay: 260ms; }
+.portal-sidebar.is-open nav .portal-nav-link:nth-of-type(8) { transition-delay: 295ms; }
+.portal-sidebar.is-open nav .portal-nav-link:nth-of-type(9) { transition-delay: 330ms; }
+.portal-sidebar.is-open nav .portal-nav-link:nth-of-type(10) { transition-delay: 365ms; }
+
+.portal-sidebar .border-t,
+.portal-sidebar .border-b {
+  border-color: rgb(255 255 255 / 13%);
+}
+
+.portal-sidebar .portal-nav-link:hover:not([aria-current="page"]) {
+  background-color: rgb(198 91 115 / 24%);
+  color: #fff;
+}
+
+.portal-sidebar .portal-nav-link[aria-current="page"] {
+  color: var(--deep-burgundy);
+  background-color: var(--soft-rose);
+  box-shadow: inset 3px 0 0 var(--rose);
+}
+
+.portal-sidebar .portal-nav-link[aria-current="page"] svg {
+  color: var(--deep-burgundy);
+}
+
+.portal-brand-mark {
+  color: var(--soft-rose);
+  background-color: rgb(198 91 115 / 20%);
+  border-color: rgb(255 255 255 / 24%);
+}
+
+.portal-sidebar .portal-drawer-subtle {
+  color: rgb(255 255 255 / 60%);
+}
+
+.portal-sidebar .portal-drawer-close {
+  color: rgb(255 255 255 / 70%);
+}
+
+.portal-sidebar .portal-drawer-close:hover {
+  color: #fff;
+  background-color: rgb(255 255 255 / 12%);
+}
+
+.portal-upgrade-card {
+  background: rgb(255 255 255 / 10%);
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 0.75rem;
+}
+
+/* Rolled-mat trigger button */
+.mat-trigger {
+  position: relative;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 200ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.rolled-mat-icon {
+  display: block;
+  width: 42px;
+  height: 42px;
+  overflow: visible;
+  filter: drop-shadow(0 2px 2px rgb(73 37 49 / 18%));
+  transition: transform 200ms ease, filter 200ms ease;
+}
+
+.mat-trigger:hover {
+  transform: translateY(-1px);
+  background-color: var(--soft-rose);
+  box-shadow: 0 4px 12px rgb(112 47 66 / 10%);
+}
+
+.mat-trigger:hover .rolled-mat-icon {
+  transform: rotate(-3deg) scale(1.04);
+  filter: drop-shadow(0 4px 4px rgb(73 37 49 / 24%));
+}
+
+.mat-trigger[aria-expanded="true"] .rolled-mat-icon {
+  transform: rotate(2deg);
+}
+
+.mat-trigger:active .rolled-mat-icon {
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-sidebar,
+  .portal-sidebar.is-open {
+    transform: none;
+    clip-path: inset(0 0 0 0 round 18px);
+    transition-delay: 0s !important;
+  }
+}
